@@ -6,6 +6,6 @@ set cflags=/nologo /Zi /std:c++20 /EHsc /Od
 set lflags=/INCREMENTAL:NO /subsystem:windows
 
 pushd build
-cl %cflags% ../main.cpp /link %lflags%
+cl %cflags% ../transparent_window.cpp /link %lflags%
 del *.obj
 popd
