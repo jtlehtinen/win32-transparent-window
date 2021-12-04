@@ -47,7 +47,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
   RegisterClassA(&wc);
 
   SIZE windowSize = {500, 500};
-  HWND window = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST, "class", "title", WS_POPUP, 2160 - 500, 3840 - 400, windowSize.cx, windowSize.cy, nullptr, nullptr, instance, nullptr);
+  HWND window = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST, "class", "title", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, windowSize.cx, windowSize.cy, nullptr, nullptr, instance, nullptr);
   ShowWindow(window, SW_SHOW);
 
   HDC windowDC = GetDC(window);
@@ -73,8 +73,8 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
       DispatchMessageA(&msg);
     } else {
       double time = static_cast<double>(GetTickCount()) / 1000.0;
-      float dx = cos(time * 0.1 * 11.0) * 0.3;
-      float dy = sin(time * 0.1 * 3.0) * 0.3;
+      float dx = static_cast<float>(cos(time * 0.1 * 11.0) * 0.3);
+      float dy = static_cast<float>(sin(time * 0.1 * 3.0) * 0.3);
 
       for (int y = 0; y < windowSize.cy; ++y) {
         for (int x = 0; x < windowSize.cx; ++x) {
