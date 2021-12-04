@@ -41,8 +41,6 @@ float smoothstep(float edge0, float edge1, float value) {
 }
 
 int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCommand) {
-  //SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
   WNDCLASSA wc = {.lpfnWndProc = windowMessageHandler, .hInstance = instance, .lpszClassName = "class"};
   RegisterClassA(&wc);
 
