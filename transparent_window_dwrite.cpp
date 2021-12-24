@@ -33,13 +33,12 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
   RegisterClassA(&wc);
 
   SIZE windowSize = {500, 500};
-  HWND window = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST, "class", "title", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, windowSize.cx, windowSize.cy, nullptr, nullptr, instance, nullptr);
-  ShowWindow(window, SW_SHOW);
+  HWND targetWindow = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST, "class", "title", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, windowSize.cx, windowSize.cy, nullptr, nullptr, instance, nullptr);
+  ShowWindow(targetWindow, SW_SHOW);
 
-  HDC windowDC = GetDC(window);
-  HDC desktopDC = GetDC(nullptr);
-  HDC memoryDC = CreateCompatibleDC(windowDC);
-  HBITMAP bitmap = CreateCompatibleBitmap(windowDC, windowSize.cx, windowSize.cy);
+  HDC targetWindowDC = GetDC(targetWindow);
+  HDC memoryDC = CreateCompatibleDC(targetWindowDC);
+  HBITMAP bitmap = CreateCompatibleBitmap(targetWindowDC, windowSize.cx, windowSize.cy);
   HGDIOBJ original = SelectObject(memoryDC, bitmap);
 
   ID2D1Factory* d2d = nullptr;
@@ -62,7 +61,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
   props.usage = D2D1_RENDER_TARGET_USAGE_NONE;
   props.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
   d2d->CreateDCRenderTarget(&props, &rt);
-  rt->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), &brush);
+  rt->CreateSolidColorBrush(D2D1::ColorF(0.0f, 1.0f, 1.0f, 1.0f), &brush);
 
   MSG msg = {};
   while (msg.message != WM_QUIT) {
@@ -78,16 +77,16 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
       rt->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
       static std::wstring text = L"DirectWrite text";
-      brush->SetOpacity(0.8f);
+      brush->SetColor(D2D1::ColorF(0.0f, 1.0f, 1.0f, 0.3f));
       rt->DrawText(text.c_str(), static_cast<UINT>(text.length()), textFormat, D2D1::RectF(0.0f, 0.0f, static_cast<float>(windowSize.cx), static_cast<float>(windowSize.cy)), brush);
 
-      brush->SetOpacity(0.6f);
+      brush->SetColor(D2D1::ColorF(1.0f, 0.0f, 0.0f, 0.6f));
       rt->FillRectangle(D2D1::RectF(0.0f, 0.0f, 100.0f, 100.0f), brush);
       rt->EndDraw();
 
-      POINT source = { };
+      POINT layerLocation = { };
       BLENDFUNCTION blend = {.BlendOp = AC_SRC_OVER, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA};
-      UpdateLayeredWindow(window, desktopDC, nullptr, &windowSize, memoryDC, &source, 0, &blend, ULW_ALPHA);
+      UpdateLayeredWindow(targetWindow, nullptr, nullptr, &windowSize, memoryDC, &layerLocation, 0, &blend, ULW_ALPHA);
     }
   }
 
@@ -100,9 +99,8 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
   SelectObject(memoryDC, original);
   DeleteObject(bitmap);
   DeleteDC(memoryDC);
-  ReleaseDC(nullptr, desktopDC);
-  ReleaseDC(window, windowDC);
-  DestroyWindow(window);
+  ReleaseDC(targetWindow, targetWindowDC);
+  DestroyWindow(targetWindow);
 
   return 0;
 }
