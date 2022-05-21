@@ -45,25 +45,26 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
   RegisterClassA(&wc);
 
   // @NOTE: [Layered Windows](https://docs.microsoft.com/en-us/windows/win32/winmsg/window-features#layered-windows)
-  SIZE windowSize = {500, 500};
-  HWND targetWindow = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST, "class", "title", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, windowSize.cx, windowSize.cy, nullptr, nullptr, instance, nullptr);
-  ShowWindow(targetWindow, SW_SHOW);
+  SIZE size = {500, 500};
+  HWND window = CreateWindowExA(WS_EX_LAYERED | WS_EX_TOPMOST, "class", "title", WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, size.cx, size.cy, nullptr, nullptr, instance, nullptr);
 
-  HDC targetWindowDC = GetDC(targetWindow);
-  HDC memoryDC = CreateCompatibleDC(targetWindowDC);
-  ReleaseDC(targetWindow, targetWindowDC);
+  HDC dc = GetDC(window);
+  HDC memoryDC = CreateCompatibleDC(dc);
+  ReleaseDC(window, dc);
 
   BITMAPINFO info = { };
   info.bmiHeader.biSize = sizeof(info.bmiHeader);
-  info.bmiHeader.biWidth = windowSize.cx;
-  info.bmiHeader.biHeight = -windowSize.cy;
+  info.bmiHeader.biWidth = size.cx;
+  info.bmiHeader.biHeight = -size.cy;
   info.bmiHeader.biPlanes = 1;
   info.bmiHeader.biBitCount = 32;
   info.bmiHeader.biCompression = BI_RGB;
 
   uint32_t* bitmapPixels = nullptr;
   HBITMAP bitmap = CreateDIBSection(memoryDC, &info, DIB_RGB_COLORS, reinterpret_cast<void**>(&bitmapPixels), nullptr, 0);
-  HGDIOBJ original = SelectObject(memoryDC, bitmap);
+  SelectObject(memoryDC, bitmap);
+
+  ShowWindow(window, SW_SHOW);
 
   MSG msg = {};
   while (msg.message != WM_QUIT) {
@@ -75,10 +76,10 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
       float dx = static_cast<float>(cos(time * 0.1 * 11.0) * 0.3);
       float dy = static_cast<float>(sin(time * 0.1 * 3.0) * 0.3);
 
-      for (int y = 0; y < windowSize.cy; ++y) {
-        for (int x = 0; x < windowSize.cx; ++x) {
-          float u = static_cast<float>(x) / static_cast<float>(windowSize.cx - 1) * 2.0f - 1.0f;
-          float v = static_cast<float>(y) / static_cast<float>(windowSize.cy - 1) * 2.0f - 1.0f;
+      for (int y = 0; y < size.cy; ++y) {
+        for (int x = 0; x < size.cx; ++x) {
+          float u = static_cast<float>(x) / static_cast<float>(size.cx - 1) * 2.0f - 1.0f;
+          float v = static_cast<float>(y) / static_cast<float>(size.cy - 1) * 2.0f - 1.0f;
           float c = smoothstep(-0.1f, 0.f, -sdcircle(u + dx, v + dy, 0.2f));
 
           uint32_t r = toUintColor(premultiplyAlpha(lerp(0.94f, 0.98f, c), c));
@@ -86,20 +87,19 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, 
           uint32_t b = toUintColor(premultiplyAlpha(lerp(0.36f, 0.41f, c), c));
           uint32_t a = toUintColor(c);
 
-          bitmapPixels[y * windowSize.cx + x] = (a << 24) | (r << 16) | (g << 8) | b;
+          bitmapPixels[y * size.cx + x] = (a << 24) | (r << 16) | (g << 8) | b;
         }
       }
 
       POINT layerLocation = {0, 0};
       BLENDFUNCTION blend = {.BlendOp = AC_SRC_OVER, .SourceConstantAlpha = 255, .AlphaFormat = AC_SRC_ALPHA};
-      UpdateLayeredWindow(targetWindow, nullptr, nullptr, &windowSize, memoryDC, &layerLocation, 0, &blend, ULW_ALPHA);
+      UpdateLayeredWindow(window, nullptr, nullptr, &size, memoryDC, &layerLocation, 0, &blend, ULW_ALPHA);
     }
   }
 
-  SelectObject(memoryDC, original);
   DeleteObject(bitmap);
   DeleteDC(memoryDC);
-  DestroyWindow(targetWindow);
+  DestroyWindow(window);
 
   return 0;
 }
